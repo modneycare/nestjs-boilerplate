@@ -29,10 +29,14 @@ export class AuthService {
     return { accessToken, refreshToken };
   }
 
-  async login(email: string, password: string): Promise<any> {
+  async login(
+    email: string,
+    password: string,
+    session?: Record<string, any>,
+  ): Promise<any> {
     // Step 1: Fetch a user with the given email
     const user = await this.prisma.user.findUnique({ where: { email: email } });
-
+    // prisma session create
     // If no user is found, throw an error
     if (!user) {
       throw new NotFoundException(`No user found for email: ${email}`);
@@ -50,6 +54,31 @@ export class AuthService {
     const { accessToken, refreshToken } = await this.generateTokens({
       userId: user.id,
     });
+
+    // prisma session create
+    session.token = accessToken;
+    // session 값 있는지 체크, 있으면 expiresAt 업데이트, 없으면 생성, 3개 초과시 가장 오래된 세션 지우기.
+
+    const sessions = await this.prisma.session.findMany({
+      where: { userId: user.id },
+    });
+    const existingSession = sessions.find((s) => s.token === session.token);
+    if (existingSession) {
+      await this.prisma.session.update({
+        where: { id: existingSession.id },
+        data: { expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7) },
+      });
+    } else if (sessions.length >= 3) {
+      await this.prisma.session.delete({ where: { id: sessions[0].id } });
+    } else {
+      await this.prisma.session.create({
+        data: {
+          userId: user.id,
+          token: session.token,
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        },
+      });
+    }
 
     delete user?.password;
     return {
@@ -250,5 +279,13 @@ export class AuthService {
     } catch (error) {
       throw new NotFoundException('Invalid token!');
     }
+  }
+
+  // logout
+  async logout(session: Record<string, any>) {
+    // prisma session delete
+    await this.prisma.session.delete({ where: { id: session?.id } });
+    session.destroy();
+    return { message: 'Logout successful' };
   }
 }

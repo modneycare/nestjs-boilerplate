@@ -8,7 +8,8 @@ import {
 import * as fastifyHelmet from '@fastify/helmet';
 import * as fastifyCompress from '@fastify/compress';
 const fs = require('fs');
-
+import fastifySession from '@fastify/session';
+import fastifyCookie from '@fastify/cookie';
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
@@ -23,6 +24,13 @@ async function bootstrap() {
   );
   app.register(fastifyHelmet);
   app.register(fastifyCompress);
+  await app.register(fastifyCookie);
+  await app.register(fastifySession, {
+    secret: process.env.JWT_SECRET,
+    cookie: {
+      secure: false, // HTTPS를 사용하는 경우 true로 설정
+    },
+  });
 
   app.enableCors({
     origin: [
@@ -34,8 +42,8 @@ async function bootstrap() {
     credentials: true,
   });
   const config = new DocumentBuilder()
-    .setTitle('TUNLOG')
-    .setDescription('Tunlog apis')
+    .setTitle('LOG')
+    .setDescription('cralwer server apis')
     .setVersion('1.0')
     .addBearerAuth()
     .build();

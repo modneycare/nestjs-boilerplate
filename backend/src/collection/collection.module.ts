@@ -7,10 +7,10 @@ https://docs.nestjs.com/modules
 import { Module } from '@nestjs/common';
 import { PrismaModule } from 'src/prisma/prisma.module';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Module({
-  imports: [PrismaModule],
   controllers: [CollectionController],
-  providers: [CollectionsService],
+  providers: [CollectionsService, PrismaService],
 })
 export class CollectionModule {}

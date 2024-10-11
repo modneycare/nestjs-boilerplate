@@ -7,6 +7,8 @@ export class LoginDto {
 
   @ApiProperty()
   password: string;
+
+  session?: string;
 }
 
 export class RefreshTokenDto {

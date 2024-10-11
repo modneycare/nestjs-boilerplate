@@ -1,6 +1,13 @@
 //src/auth/auth.controller.ts
 
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Session,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import {
@@ -26,8 +33,16 @@ export class AuthController {
     type: AuthResponseDto,
     isArray: false,
   })
-  login(@Body() { email, password }: LoginDto): Promise<ResponseDto> {
-    return this.authService.login(email, password);
+  login(
+    @Session() session: Record<string, any>,
+    @Body() { email, password }: LoginDto,
+  ): Promise<ResponseDto> {
+    return this.authService.login(email, password, session);
+  }
+  // logout
+  @Post('logout')
+  logout(@Session() session: Record<string, any>) {
+    return this.authService.logout(session);
   }
 
   @Post('register')
