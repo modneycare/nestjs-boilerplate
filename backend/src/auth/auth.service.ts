@@ -91,7 +91,7 @@ export class AuthService {
         },
       } as any,
       include: {
-        disponibility: true,
+        // disponibility: true,
       },
     });
 
@@ -118,7 +118,7 @@ export class AuthService {
       const user = await this.prisma.user.findUnique({
         where: { id: decoded?.userId },
         include: {
-          disponibility: true,
+          // disponibility: true,
         },
       });
 
@@ -169,7 +169,8 @@ export class AuthService {
         subject: 'Reset Password',
         template: './requestResetPassword',
         context: {
-          name: user?.firstName,
+          // ! TODO : fix eamil to user?.name
+          name: user?.email,
           link: `${process.env.FRONTEND_URL}/reset-password?token=${resetPasswordToken}`,
         },
       });
@@ -191,7 +192,8 @@ export class AuthService {
 
         // Fetch user details based on the decoded user ID from the reset token
         const user = await this.prisma.user.findUnique({
-          where: { id: decoded?.userId, resetPasswordToken },
+          // ! TODO : Fix the where clause to include the resetPasswordToken
+          where: { id: decoded?.userId, password: resetPasswordToken },
         });
 
         if (!user) {
@@ -236,7 +238,7 @@ export class AuthService {
       const user = await this.prisma.user.findUnique({
         where: { id: decoded?.userId },
         include: {
-          disponibility: true,
+          // disponibility: true,
         },
       });
 

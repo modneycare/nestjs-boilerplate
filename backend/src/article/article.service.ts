@@ -7,7 +7,7 @@ export class ArticlesService {
 
   findAll() {
     console.log('cccccccccccccc');
-
-    return this.prisma.article.findMany();
+    return this.prisma.post.findMany();
+    // return this.prisma.article.findMany();
   }
 }

@@ -6,96 +6,687 @@ generator client {
   binaryTargets = ["native", "debian-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
 }
 
+// schema.prisma
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model user_role {
-  id       Int    @id @default(autoincrement())
-  roleName String
-  users    user[]
+enum Role {
+  USER
+  ADMIN
+  MANAGER
 }
 
-model company_type {
-  id       Int    @id @default(autoincrement())
-  typeName String
-  users    user[]
+model User {
+  id                         String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                       String
+  email                      String                      @unique
+  role                       Role                        @default(USER)
+  password                   String
+  businessNumber             String // 사업자등록번호
+  businessLicense            String // 사업자등록증 파일 경로 또는 URL
+  isApproved                 Boolean                     @default(false) // 관리자 승인 여부
+  subscription               Subscription? // 정기구독 정보
+  allowedSessions            Int                         @default(1) // 허용된 중복 로그인 수
+  sessions                   Session[]
+  loginLogs                  UserLoginLog[]
+  collections                Collection[]
+  userProducts               UserProductDetail[]
+  paymentHistories           PaymentHistory[]
+  stores                     Store[] // 사용자가 마켓에 연 가게 정보
+  createdAt                  DateTime                    @default(now())
+  updatedAt                  DateTime                    @updatedAt
+  UserSubscription           UserSubscription[]
+  MarginTemplate             MarginTemplate[]
+  UserCollectionSettings     UserCollectionSettings[]
+  ReplacementWords           ReplacementWords[]
+  TranslationAPIKey          TranslationAPIKey[]
+  ShippingTemplates          ShippingTemplate[]
+  ImageTemplates             ImageTemplate[]
+  BannedProductCodeTemplates BannedProductCodeTemplate[]
+  Post                       Post[]
+  Comment                    Comment[]
+  PostView                   PostView[]
+  PostLike                   PostLike[]
+  Notification               Notification[]
+
+  @@index([email])
 }
 
-model user_pack {
-  id       Int    @id @default(autoincrement())
-  packName String
-  users    user[]
+model Admin {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email])
 }
 
-model car_type {
-  id       Int    @id @default(autoincrement())
-  typeName String
-  user     user[]
+model Session {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.Uuid
+  token     String   @unique
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  @@index([userId])
 }
 
-model user_dispo {
-  id       Int     @id @default(autoincrement())
-  goingTo  String?
-  startDay String?
-  endDay   String?
-  startAt  String?
-  endAt    String?
-  comment  String?
-  user     user?   @relation(fields: [userId], references: [id])
-  userId   Int?    @unique
+model PaymentPlan {
+  id                Int                @id @default(autoincrement())
+  name              String // 결제 플랜 이름
+  description       String? // 결제 플랜 설명
+  maxProductLimit   Int? // 상품 수집 최대 갯수 (null이면 무제한)
+  isUnlimited       Boolean            @default(false) // 무제한 여부
+  price             Float // 플랜 가격
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  userSubscriptions UserSubscription[]
+  Subscription      Subscription[]
+
+  @@index([name])
 }
 
-model user {
-  id                 Int     @id @default(autoincrement())
-  firstName          String? @db.VarChar(20)
-  lastName           String? @db.VarChar(20)
-  phone              String? @db.VarChar(20)
-  email              String  @unique @db.VarChar(100)
-  companyName        String? @db.VarChar(50)
-  city               String? @db.VarChar(20)
-  country            String? @db.VarChar(20)
-  address            String? @db.VarChar(50)
-  websiteUrl         String? @db.VarChar(50)
-  commercialRegister String? @db.VarChar(20)
-  patent             String? @db.VarChar(20)
-  verified           Boolean @default(false)
-  password           String  @db.VarChar(255)
-  resetPasswordToken String? @db.VarChar(255)
-  carNumber          String?
-  carWidth           Float?
-  carHeight          Float?
-  carWeight          Float?
+model Subscription {
+  userId        String      @id @db.Uuid // Subscription의 primary key는 userId
+  user          User        @relation(fields: [userId], references: [id])
+  paymentPlan   PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  paymentPlanId Int
+  startDate     DateTime
+  endDate       DateTime
+  isActive      Boolean     @default(true)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
-  // company type relation
-  carType       car_type?     @relation(fields: [carTypeId], references: [id])
-  carTypeId     Int?
-  // company type relation
-  companyType   company_type? @relation(fields: [companyTypeId], references: [id])
-  companyTypeId Int?
-  // user pack
-  userPack      user_pack?    @relation(fields: [userPackId], references: [id])
-  userPackId    Int?
-  // role relation
-  role          user_role?    @relation(fields: [roleId], references: [id])
-  roleId        Int?          @default(3)
-
-  // One-to-one
-  disponibility user_dispo?
-
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  @@index([paymentPlanId])
 }
 
-model article {
+model UserSubscription {
+  id                Int         @id @default(autoincrement())
+  user              User        @relation(fields: [userId], references: [id])
+  userId            String      @db.Uuid
+  paymentPlan       PaymentPlan @relation(fields: [paymentPlanId], references: [id])
+  paymentPlanId     Int
+  maxProductLimit   Int? // 현재 플랜에 따라 수집 가능한 상품 수 (null이면 무제한)
+  collectedProducts Int         @default(0) // 현재까지 수집된 상품 수
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  @@index([userId])
+  @@index([paymentPlanId])
+}
+
+model SourcingSite { 
+  id Int @id @default(autoincrement())
+  name String
+  defaultUrl String
+  isActive Boolean @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  collections Collection[] @ignore
+
+  @@index([name])
+}
+model Collection {
+  id                Int                 @id @default(autoincrement())
+  name              String // 수집명
+  user              User                @relation(fields: [userId], references: [id])
+  userId            String              @db.Uuid
+  products          ProductCollection[]
+  status            CollectionStatus    @default(PENDING) // 수집 상태
+  progress          Float               @default(0) // 수집 진행율 (0~100)
+  marginTemplate    MarginTemplate?     @relation(fields: [marginTemplateId], references: [id]) // 적용된 마진 템플릿
+  marginTemplateId  Int?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  UserProductDetail UserProductDetail[]
+  sourcingSite       SourcingSite?       @relation(fields: [sourcingSiteId], references: [id])
+  sourcingSiteId     Int?
+
+  @@index([userId])
+  @@index([marginTemplateId])
+}
+
+enum CollectionStatus {
+  PENDING // 수집 대기 중
+  IN_PROGRESS // 수집 진행 중
+  COMPLETED // 수집 완료
+  REVIEWING // 검수 중
+  FAILED // 수집 실패
+}
+
+model Product {
+  id              Int      @id @default(autoincrement())
+  productId       String   @unique // 외부 시스템의 상품 ID, 1:1 관계를 보장하기 위해 unique 설정
+  url             String   @unique// 상품 URL
+  name            String
+  brandName       String? // 브랜드명
+  sellerName      String? // 판매자명 또는 가게명
+  originalPrice   Float
+  discountedPrice Float
+  stockQuantity   Int // 상품의 수량
+  detailPageUrl   String
+  tags            String[] // 상품 태그
+  translatedName  String? // 번역된 상품명
+  translatedBrand String? // 번역된 브랜드명
+  translatedTags  String[] // 번역된 태그
+  isAdult         Boolean? // 성인 상품 여부
+  isAd            Boolean? // 광고 상품 여부
+
+  collections       ProductCollection[]
+  details           ProductDetail? // 상품 상세 정보
+  failureLogs       ProductFailureLog[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  UserProductDetail UserProductDetail[]
+
+  @@index([productId])
+  @@index([url])
+
+}
+
+//리스트수집 :  상품수집 -> product 체크 -> productCollection에 삽입 
+model ProductCollection {
+  id           Int        @id @default(autoincrement())
+  product      Product    @relation(fields: [productId], references: [id])
+  productId    Int
+  collection   Collection @relation(fields: [collectionId], references: [id])
+  collectionId Int
+
+  @@index([productId])
+  @@index([collectionId])
+}
+
+model ProductDetail {
+  id             Int             @id @default(autoincrement())
+  product        Product         @relation(fields: [productId], references: [id])
+  productId      Int             @unique // 1:1 관계를 보장하기 위해 unique 설정
+  currency       String
+  thumbnailUrl   String
+  description    String?
+  additionalInfo Json? // 부가설명 정보 (원단, 원산지 등 JSON 형태로 저장)
+  options        ProductOption[]
+  detailImages   DetailImage[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([productId])
+}
+
+model ProductOption {
+  id              Int           @id @default(autoincrement())
+  name            String // 옵션명 (예: 색상, 사이즈 등)
+  price           Float
+  stockQuantity   Int // 옵션별 수량
+  productDetail   ProductDetail @relation(fields: [productDetailId], references: [id])
+  productDetailId Int
+
+  @@index([productDetailId])
+}
+
+model DetailImage {
+  id              Int           @id @default(autoincrement())
+  imageUrl        String
+  productDetail   ProductDetail @relation(fields: [productDetailId], references: [id])
+  productDetailId Int
+
+  @@index([productDetailId])
+}
+
+model UserProductDetail {
+  id                 Int                         @id @default(autoincrement())
+  user               User                        @relation(fields: [userId], references: [id])
+  userId             String                      @db.Uuid
+  product            Product                     @relation(fields: [productId], references: [id])
+  productId          Int
+  collection         Collection                  @relation(fields: [collectionId], references: [id]) // 수집명 구분을 위한 컬렉션
+  collectionId       Int
+  status             CollectionStatus            @default(PENDING) // 상품의 수집 상태
+  customImages       UserDetailImage[] // 사용자별 이미지 순서 관리
+  marketUploads      MarketUpload[] // 마켓 업로드 상태 관리
+  categoryMapping    UserProductCategoryMapping? // 1:1 대응되는 카테고리 설정
+  shippingTemplate   ShippingTemplate?           @relation(fields: [shippingTemplateId], references: [id]) // 적용된 배송비 템플릿
+  shippingTemplateId Int?
+  imageTemplate      ImageTemplate?              @relation(fields: [imageTemplateId], references: [id]) // 적용된 이미지 템플릿
+  imageTemplateId    Int?
+  customProductName  String? // 사용자가 변경한 상품명
+  calculatedPrice    Float? // 마진템플릿과 카테고리 수수료율을 적용한 자동 계산된 판매가격
+  manualPrice        Float? // 사용자가 수동으로 조정한 판매가격
+  selectedOptionIds  Int[] // 사용자가 선택한 상품 옵션의 ID 목록
+  tags               String[] // 사용자가 설정한 태그 목록
+  autoUpdateEnabled  Boolean                     @default(true) // 상품 자동 업데이트 여부
+  isLocked           Boolean                     @default(false) // 상품 잠금 여부
+  notes              Note[] // 상품에 대한 사용자 메모
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([productId])
+  @@index([collectionId])
+  @@index([shippingTemplateId])
+  @@index([imageTemplateId])
+}
+
+model UserDetailImage {
+  id                  Int               @id @default(autoincrement())
+  userProductDetail   UserProductDetail @relation(fields: [userProductDetailId], references: [id])
+  userProductDetailId Int
+  imageUrl            String
+  order               Int // 이미지 순서 값
+
+  @@index([userProductDetailId])
+}
+
+model ProductFailureLog {
+  id         Int      @id @default(autoincrement())
+  product    Product  @relation(fields: [productId], references: [id])
+  productId  Int
+  reason     String // 실패 사유
+  retryCount Int      @default(0) // 재수집 시도 횟수
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([productId])
+}
+
+model UserLoginLog {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @db.Uuid
+  ipAddress String
+  loginAt   DateTime @default(now())
+
+  @@index([userId])
+}
+
+model PaymentHistory {
   id          Int      @id @default(autoincrement())
-  title       String?  @unique
-  description String?
-  category    String?
-  body        String
-  published   Boolean  @default(false)
+  user        User     @relation(fields: [userId], references: [id])
+  userId      String   @db.Uuid
+  amount      Float // 결제 금액
+  paymentDate DateTime @default(now())
+  planName    String // 결제한 플랜 이름
+  planId      Int // 결제한 플랜 ID
+  status      String // 결제 상태 (예: 성공, 실패)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Market {
+  id         Int              @id @default(autoincrement())
+  name       String // 마켓 이름 (예: 네이버 스마트스토어, 쿠팡 등)
+  settings   MarketSettings[]
+  stores     Store[]
+  categories MarketCategory[] // 각 마켓의 카테고리 정보
+
+  @@index([name])
+}
+
+model Store {
+  id           Int            @id @default(autoincrement())
+  name         String // 가게 이름
+  user         User           @relation(fields: [userId], references: [id])
+  userId       String         @db.Uuid
+  market       Market         @relation(fields: [marketId], references: [id])
+  marketId     Int
+  apiKey       MarketAPIKey?  @relation(fields: [apiKeyId], references: [id])
+  apiKeyId     Int?           @unique // 1:1 대응을 위한 unique 설정
+  MarketUpload MarketUpload[]
+
+  @@index([userId])
+  @@index([marketId])
+}
+
+model MarketAPIKey {
+  id        Int      @id @default(autoincrement())
+  key       String // API 키 값
+  isValid   Boolean  @default(true) // 키가 정상 동작하는지 여부
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store?
+
+  @@index([key])
+}
+
+model MarketUpload {
+  id                  Int                   @id @default(autoincrement())
+  userProductDetail   UserProductDetail     @relation(fields: [userProductDetailId], references: [id])
+  userProductDetailId Int
+  store               Store                 @relation(fields: [storeId], references: [id])
+  storeId             Int
+  status              UploadStatus          @default(PENDING) // 업로드 상태
+  failureLog          String? // 업로드 실패 시 실패 사유 기록
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  MarketUploadStats   MarketUploadStats[]
+  MarketUploadHistory MarketUploadHistory[]
+
+  @@index([userProductDetailId])
+  @@index([storeId])
+}
+
+enum UploadStatus {
+  PENDING // 업로드 대기 중
+  SUCCESS // 업로드 성공
+  FAILED // 업로드 실패
+}
+
+model MarketSettings {
+  id               Int      @id @default(autoincrement())
+  market           Market   @relation(fields: [marketId], references: [id])
+  marketId         Int
+  maxNameLength    Int // 마켓별 최대 상품명 길이
+  otherConstraints Json? // 기타 마켓별 상품 등록 조건
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([marketId])
+}
+
+model Category {
+  id               Int              @id @default(autoincrement())
+  name             String // 기준 카테고리명
+  marketCategories MarketCategory[] // 각 마켓별 카테고리와 연동
+
+  @@index([name])
+}
+
+model MarketCategory {
+  id                         Int                          @id @default(autoincrement())
+  market                     Market                       @relation(fields: [marketId], references: [id])
+  marketId                   Int
+  category                   Category                     @relation(fields: [categoryId], references: [id])
+  categoryId                 Int
+  categoryIdInMarket         String // 마켓에서 사용하는 카테고리 ID
+  categoryNameInMarket       String // 마켓에서 사용하는 카테고리명
+  feeRate                    Float // 마켓 카테고리별 수수료율 (예: 5%는 0.05)
+  createdAt                  DateTime                     @default(now())
+  updatedAt                  DateTime                     @updatedAt
+  UserProductCategoryMapping UserProductCategoryMapping[]
+
+  @@index([marketId])
+  @@index([categoryId])
+  @@index([categoryIdInMarket])
+}
+
+model UserProductCategoryMapping {
+  id                  Int               @id @default(autoincrement())
+  userProductDetail   UserProductDetail @relation(fields: [userProductDetailId], references: [id])
+  userProductDetailId Int               @unique // 1:1 대응을 위한 유니크 제약 조건
+  marketCategory      MarketCategory    @relation(fields: [marketCategoryId], references: [id])
+  marketCategoryId    Int
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([userProductDetailId])
+  @@index([marketCategoryId])
+}
+
+model MarginTemplate {
+  id         Int                    @id @default(autoincrement())
+  user       User                   @relation(fields: [userId], references: [id])
+  userId     String                 @db.Uuid
+  name       String // 마진 템플릿 이름
+  details    MarginTemplateDetail[] // 마진 세부 정보
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  Collection Collection[]
+
+  @@index([userId])
+}
+
+model MarginTemplateDetail {
+  id               Int            @id @default(autoincrement())
+  marginTemplate   MarginTemplate @relation(fields: [marginTemplateId], references: [id])
+  marginTemplateId Int
+  minCost          Float // 원가 최소 범위
+  maxCost          Float // 원가 최대 범위
+  marginAmount     Float // 적용할 마진 금액
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([marginTemplateId])
+}
+
+model MarketUploadStats {
+  id             Int          @id @default(autoincrement())
+  marketUpload   MarketUpload @relation(fields: [marketUploadId], references: [id])
+  marketUploadId Int
+  views          Int          @default(0) // 조회수
+  sales          Int          @default(0) // 판매횟수
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@index([marketUploadId])
+}
+
+model MarketUploadHistory {
+  id             Int          @id @default(autoincrement())
+  marketUpload   MarketUpload @relation(fields: [marketUploadId], references: [id])
+  marketUploadId Int
+  changeDetails  Json // 업데이트된 내용 기록
+  updatedAt      DateTime     @default(now())
+
+  @@index([marketUploadId])
+}
+
+model UserCollectionSettings {
+  id                 Int      @id @default(autoincrement())
+  user               User     @relation(fields: [userId], references: [id])
+  userId             String   @db.Uuid
+  name               String // 템플릿 이름
+  bannedKeywords     String[] // 수집금지어 목록
+  bannedBrands       String[] // 수집금지 브랜드 목록
+  bannedProductCodes String[] // 수집금지 상품코드 목록
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ReplacementWords {
+  id              Int      @id @default(autoincrement())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String   @db.Uuid
+  originalWord    String // 원본 단어
+  replacementWord String // 치환 단어
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model TranslationSite {
+  id                Int                 @id @default(autoincrement())
+  name              String // 번역 대상 사이트 이름 (예: Google Translate, Papago 등)
+  url               String // 번역 사이트 URL
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  TranslationAPIKey TranslationAPIKey[]
+
+  @@index([name])
+}
+
+model TranslationAPIKey {
+  id                Int             @id @default(autoincrement())
+  user              User            @relation(fields: [userId], references: [id])
+  userId            String          @db.Uuid
+  translationSite   TranslationSite @relation(fields: [translationSiteId], references: [id])
+  translationSiteId Int // 대상 번역 사이트 ID
+  apiKey            String // 번역 API Key 값
+  isValid           Boolean         @default(true) // 키의 정상 동작 여부
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([userId])
+  @@index([translationSiteId])
+}
+
+model ShippingTemplate {
+  id                 Int                 @id @default(autoincrement())
+  user               User                @relation(fields: [userId], references: [id])
+  userId             String              @db.Uuid
+  name               String // 템플릿 이름
+  basicShippingFee   Float // 기본 배송비
+  exchangeReturnFee  Float // 교환 반품비
+  remoteAreaFee      Float // 도서산간지역 배송비
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  UserProductDetails UserProductDetail[]
+
+  @@index([userId])
+}
+
+model ImageTemplate {
+  id                 Int                 @id @default(autoincrement())
+  user               User                @relation(fields: [userId], references: [id])
+  userId             String              @db.Uuid
+  name               String // 이미지 템플릿 이름
+  topImageUrl        String[] // 상세페이지 상단 이미지 URL
+  bottomImageUrl     String[] // 상세페이지 하단 이미지 URL
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  UserProductDetails UserProductDetail[]
+
+  @@index([userId])
+}
+
+model BannedProductCodeTemplate {
+  id                 Int      @id @default(autoincrement())
+  user               User     @relation(fields: [userId], references: [id])
+  userId             String   @db.Uuid
+  name               String // 수집 금지 상품코드 템플릿 이름
+  bannedProductCodes String[] // 수집 금지 상품코드 목록
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ExchangeRate {
+  id          Int      @id @default(autoincrement())
+  currency    String // 환율이 적용되는 통화 (예: USD, CNY)
+  rate        Float // 기준 환율 (기준 통화 대비 환율)
+  lastUpdated DateTime @default(now()) // 마지막 업데이트 시간
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([currency])
+}
+
+// 게시판 
+
+enum BoardPermission {
+  ADMIN_ONLY // 관리자만 작성 가능
+  USER_ALLOWED // 사용자도 작성 가능
+}
+
+model Board {
+  id         Int             @id @default(autoincrement())
+  name       String // 게시판 이름 (예: 공지사항, 팁 게시판)
+  permission BoardPermission // 게시판 작성 권한
+  posts      Post[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+}
+
+model Post {
+  id          Int        @id @default(autoincrement())
+  title       String // 게시물 제목
+  content     String? // 게시물 내용 (텍스트 형태)
+  htmlContent String? // 게시물 HTML 내용
+  views       Int        @default(0) // 조회수
+  likes       Int        @default(0) // 좋아요 수
+  board       Board      @relation(fields: [boardId], references: [id])
+  boardId     Int
+  user        User?      @relation(fields: [userId], references: [id]) // 작성자 (사용자일 수도 있고 관리자일 수도 있음)
+  userId      String?    @db.Uuid
+  comments    Comment[]
+  postViews   PostView[] // 게시물을 조회한 유저 정보
+  postLikes   PostLike[] // 게시물을 좋아요한 유저 정보
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  @@index([boardId])
+  @@index([userId])
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String // 댓글 내용
+  post      Post     @relation(fields: [postId], references: [id])
+  postId    Int
+  user      User     @relation(fields: [userId], references: [id]) // 댓글 작성자
+  userId    String   @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model PostView {
+  id       Int      @id @default(autoincrement())
+  post     Post     @relation(fields: [postId], references: [id])
+  postId   Int
+  user     User     @relation(fields: [userId], references: [id]) // 조회한 유저 정보
+  userId   String   @db.Uuid
+  viewedAt DateTime @default(now()) // 조회한 시간
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model PostLike {
+  id      Int      @id @default(autoincrement())
+  post    Post     @relation(fields: [postId], references: [id])
+  postId  Int
+  user    User     @relation(fields: [userId], references: [id]) // 좋아요한 유저 정보
+  userId  String   @db.Uuid
+  likedAt DateTime @default(now()) // 좋아요한 시간
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Note {
+  id                  Int               @id @default(autoincrement())
+  content             String // 메모 내용
+  userProductDetail   UserProductDetail @relation(fields: [userProductDetailId], references: [id])
+  userProductDetailId Int
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([userProductDetailId])
+}
+
+model Notification {
+  id        Int              @id @default(autoincrement())
+  receiver  User             @relation(fields: [receiverId], references: [id])
+  receiverId    String           @db.Uuid
+  type      NotificationType // 알림 유형 (예: 시스템, 상품 수집, 검수, 업로드, 공지사항 등)
+  message   String // 알림 메시지 내용
+  link      String? // 알림 클릭 시 이동할 링크 (예: 특정 페이지 URL)
+  isRead    Boolean          @default(false) // 읽음/안읽음 상태
+  deletedAt DateTime? // 삭제된 경우 삭제된 날짜
+  createdAt DateTime         @default(now()) // 알림 생성 시간
+  updatedAt DateTime         @default(now()) @updatedAt // 알림 업데이트 시간
+
+  @@index([receiverId])
+}
+
+enum NotificationType {
+  SYSTEM // 시스템 알림 (예: 구독 만료 등)
+  PRODUCT_COLLECT // 상품 수집 관련 알림
+  PRODUCT_REVIEW // 상품 검수 관련 알림
+  PRODUCT_UPLOAD // 상품 업로드 관련 알림
+  ANNOUNCEMENT // 공지사항 관련 알림
+  ADMIN_MESSAGE // 관리자가 임의로 보내는 메시지
 }

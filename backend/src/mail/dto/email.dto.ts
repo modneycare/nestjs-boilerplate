@@ -7,4 +7,6 @@ export class EmailDTO {
   to: string;
   @ApiProperty()
   subject: string;
+  @ApiProperty({ required: false })
+  verify?: string;
 }

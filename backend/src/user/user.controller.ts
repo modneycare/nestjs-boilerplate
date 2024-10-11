@@ -13,6 +13,9 @@ import { UserDTO } from './dto/create-user.dto';
 import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { ResponseDto } from '../utils/response.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
+import { RoleGuard } from 'src/auth/role.guard';
+import { Roles } from 'src/auth/roles.decorator';
+import { Role } from '@prisma/client';
 
 @Controller('user')
 @ApiTags('user')
@@ -44,6 +47,8 @@ export class UserController {
   @Get(':id')
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
+  @UseGuards(RoleGuard)
+  @Roles(Role.USER)
   // @ApiBearerAuth()
   // @UseGuards(JwtAuthGuard, RoleGuard)
   // @Roles(3)
@@ -52,7 +57,7 @@ export class UserController {
     type: ResponseDto,
   })
   findOne(@Param('id') id: string) {
-    return this.userService.findOne(+id);
+    return this.userService.findOne(id);
   }
 
   @Patch(':id')
@@ -63,7 +68,7 @@ export class UserController {
     type: ResponseDto,
   })
   update(@Param('id') id: string, @Body() userDto: UserDTO) {
-    return this.userService.updateUser(+id, userDto);
+    return this.userService.updateUser(id, userDto);
   }
 
   @Patch('verfieUser/:id')
@@ -74,7 +79,7 @@ export class UserController {
     type: ResponseDto,
   })
   verifieUser(@Param('id') id: string) {
-    return this.userService.verifie(+id);
+    return this.userService.verifie(id);
   }
 
   @Delete(':id')
@@ -85,6 +90,6 @@ export class UserController {
     type: ResponseDto,
   })
   remove(@Param('id') id: string) {
-    return this.userService.removeUser(+id);
+    return this.userService.removeUser(id);
   }
 }

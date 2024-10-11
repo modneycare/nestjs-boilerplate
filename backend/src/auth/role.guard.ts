@@ -4,6 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class RoleGuard extends JwtAuthGuard {
@@ -16,7 +17,7 @@ export class RoleGuard extends JwtAuthGuard {
   }
 
   async canActivate(context: ExecutionContext): Promise<any> {
-    const requiredRoles = this.reflector.getAllAndOverride<number[]>('roles', [
+    const requiredRoles = this.reflector.getAllAndOverride<Role[]>('roles', [
       context.getHandler(),
       context.getClass(),
     ]);
@@ -44,7 +45,7 @@ export class RoleGuard extends JwtAuthGuard {
 
         // Check if the user has at least one of the required roles
         const hasRequiredRole = requiredRoles.some(
-          (role) => foundedUser?.roleId === role,
+          (role) => foundedUser?.role === role,
         );
 
         return hasRequiredRole && super.canActivate(context);

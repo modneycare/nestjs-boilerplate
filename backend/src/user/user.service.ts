@@ -32,15 +32,13 @@ export class UserService {
     const createdUser = await this.prisma.user.create({
       data: {
         ...userData,
-        disponibility: userData?.disponibility
-          ? {
-              create: userData?.disponibility,
-            }
-          : undefined,
+        // disponibility: userData?.disponibility
+        //   ? {
+        //       create: userData?.disponibility,
+        //     }
+        //   : undefined,
       } as any,
-      include: {
-        disponibility: true,
-      },
+      include: {},
     });
     delete createdUser?.password;
     return createdUser;
@@ -52,7 +50,7 @@ export class UserService {
     return data;
   }
 
-  async findOne(id: number): Promise<any> {
+  async findOne(id: string): Promise<any> {
     const user = await this.prisma.user.findUnique({
       where: { id },
     });
@@ -63,7 +61,7 @@ export class UserService {
     return user;
   }
 
-  async updateUser(id: number, userDto: UserDTO): Promise<any> {
+  async updateUser(id: string, userDto: UserDTO): Promise<any> {
     if (userDto?.password) {
       const hashedPassword = await bcrypt.hash(userDto?.password, 10);
       userDto = {
@@ -77,34 +75,25 @@ export class UserService {
       where: { id },
       data: {
         ...userDto,
-        disponibility: userDto?.disponibility
-          ? {
-              update: userDto?.disponibility,
-            }
-          : undefined,
       } as any,
-      include: {
-        disponibility: true,
-      },
+      include: {},
     });
     delete data?.password;
     return data;
   }
 
-  async verifie(id: number) {
+  async verifie(id: string) {
     const data = await this.prisma.user.update({
       where: { id },
       data: {
         verified: true,
       } as any,
-      include: {
-        disponibility: true,
-      },
+      include: {},
     });
     return data;
   }
 
-  async removeUser(id: number): Promise<any> {
+  async removeUser(id: string): Promise<any> {
     const user: any = await this.findOne(id);
     if (!user) throw new HttpException('User not found !', 400);
     const deletedUser = await this.prisma.user.delete({ where: { id } });
