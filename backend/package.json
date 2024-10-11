@@ -34,6 +34,15 @@
     "gf": "nest generate module -- $NAME && nest generate service -- $NAME && nest generate controller -- $NAME"
   },
   "dependencies": {
+    "@aws-sdk/client-cognito-identity-provider": "^3.80.0",
+    "@aws-sdk/client-s3": "^3.81.0",
+    "@aws-sdk/client-secrets-manager": "^3.76.0",
+    "@aws-sdk/client-ses": "^3.72.0",
+    "@aws-sdk/client-sqs": "^3.72.0",
+    "@aws-sdk/s3-presigned-post": "^3.81.0",
+    "@aws-sdk/s3-request-presigner": "^3.81.0",
+    "@nestjs/axios": "^0.0.7",
+    "slugify": "^1.6.5",
     "@fastify/compress": "^7.0.3",
     "@fastify/cookie": "^11.0.1",
     "@fastify/helmet": "^11.1.1",
