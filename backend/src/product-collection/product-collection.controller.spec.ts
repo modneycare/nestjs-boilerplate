@@ -9,7 +9,9 @@ describe('ProductCollectionController', () => {
       controllers: [ProductCollectionController],
     }).compile();
 
-    controller = module.get<ProductCollectionController>(ProductCollectionController);
+    controller = module.get<ProductCollectionController>(
+      ProductCollectionController,
+    );
   });
 
   it('should be defined', () => {
