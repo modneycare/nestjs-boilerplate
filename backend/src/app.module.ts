@@ -41,6 +41,8 @@ import { ProductDetailModule } from './product-detail/product-detail.module';
 import { BannedProductCodeTemplateModule } from './banned-product-code-template/banned-product-code-template.module';
 import { PostModule } from './post/post.module';
 import { SessionModule } from './session/session.module';
+import { SourcingModule } from './sourcing/sourcing.module';
+import { HttpModule } from '@nestjs/axios';
 
 @Module({
   imports: [
@@ -48,6 +50,14 @@ import { SessionModule } from './session/session.module';
     CollectionModule,
     ConfigModule.forRoot({
       isGlobal: true, // no need to import into other modules
+    }),
+    HttpModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        timeout: configService.get('HTTP_TIMEOUT'),
+        maxRedirects: configService.get('HTTP_MAX_REDIRECTS'),
+      }),
+      inject: [ConfigService],
     }),
     MailerModule.forRootAsync({
       // transport: 'smtps://user@example.com:topsecret@smtp.example.com',
@@ -106,6 +116,7 @@ import { SessionModule } from './session/session.module';
     NotificationModule,
     SourcingSiteModule,
     SessionModule,
+    SourcingModule,
   ],
   controllers: [AppController],
   providers: [

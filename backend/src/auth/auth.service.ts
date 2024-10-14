@@ -109,15 +109,6 @@ export class AuthService {
       data: {
         ...userData,
         password: hashedPassword,
-        roleId: [USERROLES?.user?.id, USERROLES?.other?.id].includes(
-          userData?.roleId,
-        )
-          ? userData.roleId
-          : 3,
-        verified: false,
-        disponibility: {
-          create: userData?.disponibility,
-        },
       } as any,
       include: {
         // disponibility: true,

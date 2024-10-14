@@ -7,6 +7,9 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
+  Logger,
+  Req,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UserDTO } from './dto/create-user.dto';
@@ -21,6 +24,7 @@ import { Role } from '@prisma/client';
 @ApiTags('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+  private readonly logger = new Logger(UserController.name);
 
   @Post()
   @ApiBearerAuth()
@@ -40,7 +44,8 @@ export class UserController {
     description: 'users response',
     type: ResponseDto,
   })
-  findAll() {
+  findAll(@Request() req) {
+    this.logger.debug('req : ' + JSON.stringify(req.user));
     return this.userService.findAll();
   }
 

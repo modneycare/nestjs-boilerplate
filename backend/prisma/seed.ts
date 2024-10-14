@@ -2,17 +2,20 @@ import { PrismaClient } from '@prisma/client';
 import { InitUserRoles } from './seeds/user-role.seed';
 import { InitArticles } from './seeds/articles.seed';
 import { InitUsers } from './seeds/user.seed';
+import { InitSourcingSite } from './seeds/sourcingsite.seed';
 
 // initialize Prisma Client
 const prisma = new PrismaClient();
 
 async function main() {
   // create one dummy article
-  await InitArticles(prisma);
-  // INIT ROLES
-  await InitUserRoles(prisma);
+  // await InitArticles(prisma);
+  // // INIT ROLES
+  // await InitUserRoles(prisma);
   //INIT Users
   await InitUsers(prisma);
+
+  await InitSourcingSite(prisma);
 }
 
 // execute the main function

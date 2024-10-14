@@ -8,30 +8,37 @@ import {
   Delete,
   UseGuards,
   Query,
+  Request,
 } from '@nestjs/common';
 import { SourcingSiteService } from './sourcing-site.service';
 import { Prisma, Role } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RoleGuard } from '../auth/role.guard';
 import { Roles } from '../auth/roles.decorator';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @Controller('sourcing-sites')
-@UseGuards(JwtAuthGuard)
+@ApiTags('sourcing-site')
+@ApiBearerAuth()
 export class SourcingSiteController {
   constructor(private readonly sourcingSiteService: SourcingSiteService) {}
 
   @Post()
   @UseGuards(RoleGuard)
+  @UseGuards(JwtAuthGuard)
   @Roles(Role.ADMIN, Role.MANAGER)
   create(@Body() createSourcingSiteDto: Prisma.SourcingSiteCreateInput) {
     return this.sourcingSiteService.create(createSourcingSiteDto);
   }
 
   @Get()
+  @UseGuards(JwtAuthGuard)
   async findAll(
     @Query('page') page: string = '1',
     @Query('pageSize') pageSize: string = '10',
+    @Request() req,
   ) {
+    console.log('sourcing-site : user : ', req.user);
     const pageNumber = parseInt(page, 10);
     const pageSizeNumber = parseInt(pageSize, 10);
     return this.sourcingSiteService.findAll(pageNumber, pageSizeNumber);

@@ -20,38 +20,13 @@ export interface EmailDTO {
   verify?: string;
 }
 
-export interface UserDispoDTO {
-  goingTo: string;
-  startDay: string;
-  endDay: string;
-  startAt: string;
-  endAt: string;
-  comment: string;
-}
-
 export interface UserDTO {
-  firstName: string;
-  lastName: string;
+  name: string;
   phone: string;
   email: string;
   password: string;
-  roleId?: number;
-  companyName?: string;
-  city?: string;
-  country?: string;
-  address?: string;
-  websiteUrl?: string;
-  commercialRegister?: string;
-  patent?: string;
-  companyTypeId?: number;
-  userPackId?: number;
-  carNumber: string;
-  carTypeId: number;
-  carWidth: number;
-  carHeight: number;
-  carWeight: number;
-  disponibility: UserDispoDTO;
-  verified: boolean;
+  businessNumber: string;
+  businessLicense: string;
 }
 
 export interface LoginDto {
@@ -289,11 +264,11 @@ export class HttpClient<SecurityDataType = unknown> {
 }
 
 /**
- * @title TUNLOG
+ * @title LOG
  * @version 1.0
  * @contact
  *
- * Tunlog apis
+ * cralwer server apis
  */
 export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDataType> {
   /**
@@ -646,6 +621,20 @@ export class Api<SecurityDataType extends unknown> extends HttpClient<SecurityDa
         body: data,
         type: ContentType.Json,
         format: 'json',
+        ...params,
+      }),
+
+    /**
+     * No description
+     *
+     * @tags auth
+     * @name AuthControllerLogout
+     * @request POST:/auth/logout
+     */
+    authControllerLogout: (params: RequestParams = {}) =>
+      this.request<void, any>({
+        path: `/auth/logout`,
+        method: 'POST',
         ...params,
       }),
 

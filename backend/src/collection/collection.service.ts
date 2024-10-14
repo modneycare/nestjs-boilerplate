@@ -7,7 +7,9 @@ export class CollectionsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.CollectionCreateInput): Promise<Collection> {
-    return this.prisma.collection.create({ data });
+    const result = this.prisma.collection.create({ data });
+    // TODO : request get item list
+    return result;
   }
 
   async findAll(): Promise<Collection[]> {

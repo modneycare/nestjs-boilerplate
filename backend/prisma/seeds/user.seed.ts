@@ -1,57 +1,45 @@
-export const InitUsers = async (prismaClient: any) => {
+import { PrismaClient } from '@prisma/client';
+
+export const InitUsers = async (prismaClient: PrismaClient) => {
   // Create Admin account
   await prismaClient.user.upsert({
-    where: { id: 1 },
+    where: { id: '5839a4f0-87a9-4a22-a669-2a68c736f746' },
     update: {},
     create: {
-      firstName: 'Admin',
-      lastName: 'Admin',
+      name: 'Admin',
       email: 'admin@gmail.com',
+      phone: '12345',
       password: '$2b$10$bdS87oU/IB8un3x.hkJ4COISd2ixNNcb2bddl2rIjMNS2xJvpkHDu', // 123456789
-      roleId: 2,
-      verified: true,
+      role: 'ADMIN',
+      isApproved: true,
     },
   });
 
   // Create Provider account
   await prismaClient.user.upsert({
-    where: { id: 2 },
+    where: { id: '81de6ea8-c73c-42f1-9863-acfb18322ce4' },
     update: {},
     create: {
-      firstName: 'Foulen',
-      lastName: 'Fouleni',
-      email: 'provider@gmail.com',
+      name: 'User',
+      email: 'user@gmail.com',
+      phone: '1234',
       password: '$2b$10$bdS87oU/IB8un3x.hkJ4COISd2ixNNcb2bddl2rIjMNS2xJvpkHDu', // 123456789
-      roleId: 3,
-      verified: true,
+      role: 'USER',
+      isApproved: true,
     },
   });
 
   // Create other Verified account
   await prismaClient.user.upsert({
-    where: { id: 3 },
+    where: { id: '81de6ea8-c73c-42f1-9863-acfb18322ce7' },
     update: {},
     create: {
-      firstName: 'Tr',
-      lastName: 'Other',
-      email: 'other@gmail.com',
+      name: 'Manager',
+      email: 'MANAGER@gmail.com',
+      phone: '12341',
       password: '$2b$10$bdS87oU/IB8un3x.hkJ4COISd2ixNNcb2bddl2rIjMNS2xJvpkHDu', // 123456789
-      roleId: 4,
-      verified: true,
-    },
-  });
-
-  // Create other Not Verified account
-  await prismaClient.user.upsert({
-    where: { id: 4 },
-    update: {},
-    create: {
-      firstName: 'Tr',
-      lastName: 'Other 2',
-      email: 'other2@gmail.com',
-      password: '$2b$10$bdS87oU/IB8un3x.hkJ4COISd2ixNNcb2bddl2rIjMNS2xJvpkHDu', // 123456789
-      roleId: 4,
-      verified: false,
+      role: 'MANAGER',
+      isApproved: true,
     },
   });
 };

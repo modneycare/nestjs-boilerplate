@@ -17,6 +17,7 @@ import {
   ResetPasswordReqDto,
 } from './dto/login.dto';
 import { ResponseDto } from '../utils/response.dto';
+import { Prisma } from '@prisma/client';
 import { UserDTO } from '../user/dto/create-user.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { AuthUserJWT } from '../utils/auth-user-jwt.decorator';
