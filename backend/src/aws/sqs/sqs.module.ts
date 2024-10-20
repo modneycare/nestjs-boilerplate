@@ -4,7 +4,6 @@ import { DiscoveryModule } from '@nestjs-plus/discovery';
 import { SqsClientProvider } from './sqs-client.provider';
 import { SqsLambdaHandler } from './sqs.lambda.handler';
 import { SqsConsumersRegistry } from './sqs.consumers.registry';
-
 @Module({
   imports: [DiscoveryModule],
   controllers: [],

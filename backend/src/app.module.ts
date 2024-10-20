@@ -43,6 +43,8 @@ import { PostModule } from './post/post.module';
 import { SessionModule } from './session/session.module';
 import { SourcingModule } from './sourcing/sourcing.module';
 import { HttpModule } from '@nestjs/axios';
+import { TranslationModule } from './translation/translation.module';
+import config from './config';
 
 @Module({
   imports: [
@@ -50,6 +52,7 @@ import { HttpModule } from '@nestjs/axios';
     CollectionModule,
     ConfigModule.forRoot({
       isGlobal: true, // no need to import into other modules
+      load: [config]
     }),
     HttpModule.registerAsync({
       imports: [ConfigModule],
@@ -117,6 +120,7 @@ import { HttpModule } from '@nestjs/axios';
     SourcingSiteModule,
     SessionModule,
     SourcingModule,
+    TranslationModule,
   ],
   controllers: [AppController],
   providers: [

@@ -3,6 +3,7 @@ import { InitUserRoles } from './seeds/user-role.seed';
 import { InitArticles } from './seeds/articles.seed';
 import { InitUsers } from './seeds/user.seed';
 import { InitSourcingSite } from './seeds/sourcingsite.seed';
+import { InitBoard } from './seeds/board.seed';
 
 // initialize Prisma Client
 const prisma = new PrismaClient();
@@ -14,8 +15,8 @@ async function main() {
   // await InitUserRoles(prisma);
   //INIT Users
   await InitUsers(prisma);
-
   await InitSourcingSite(prisma);
+  await InitBoard(prisma);
 }
 
 // execute the main function

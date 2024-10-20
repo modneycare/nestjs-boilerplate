@@ -42,4 +42,18 @@ export const InitUsers = async (prismaClient: PrismaClient) => {
       isApproved: true,
     },
   });
+
+  await prismaClient.user.upsert({
+    where: { id: '81de6ea8-c73c-42f1-9863-acfb18322ce7' },
+    update: {},
+    create: {
+      name: 'test',
+      email: 'test',
+      phone: '12341',
+      password: '$2b$10$bdS87oU/IB8un3x.hkJ4COISd2ixNNcb2bddl2rIjMNS2xJvpkHDu', // 123456789
+      role: 'MANAGER',
+      isApproved: true,
+    },
+  });
+
 };
