@@ -72,46 +72,44 @@ export class SourcingSiteService {
 
   async findAllSellian(user: User) {
     const data = await this.prisma.sourcingSite.findMany({
-      where: { activeWebSite: { has: 1 } ,
-      
-    },
-     distinct : ['id']
-      
+      where: { activeWebSite: { has: 1 } },
+      distinct: ['id'],
     });
-    return data
+    return data;
   }
 
   async findAllCrosell(user: User) {
     const data = await this.prisma.sourcingSite.findMany({
-      where : { 
-        activeWebSite : { 
-          has : 2
+      where: {
+        activeWebSite: {
+          has: 2,
         },
-        userSourcingSites : { 
-          some : { 
-            userId : user.id, 
-          }
-        }
-      }
+        // TOOD : 페이먼트플랜이랑 연계해서 실행
+        // userSourcingSites: {
+        //   some: {
+        //     userId: user.id,
+        //   },
+        // },
+      },
     });
-
-    return data
+    console.log('crosell : ', data);
+    return data;
 
     // const data =  await this.prisma.userSourcingSite.findFirst({
-    //   where: { 
+    //   where: {
     //     userId: user.id,
     //     AND : {
     //       sourcingSites : {
-    //         some : { 
-    //           activeWebSite : { 
+    //         some : {
+    //           activeWebSite : {
     //             has : 2
     //           }
     //         }
     //       }
     //     }
-        
-    //   }, 
-    //   include : { 
+
+    //   },
+    //   include : {
     //     sourcingSites : {
     //       distinct : ['id']
     //     }

@@ -382,7 +382,7 @@ export class SsqsService {
                       productId: req.productId,
                     },
                     create: {
-                      currency: response.data.display_price ?? '',
+                      currency: data.display_price?.currency ?? '',
                       detailImages: {
                         createMany: {
                           data: response.data.product_images?.map((image) => ({
@@ -477,7 +477,7 @@ export class SsqsService {
 
                     // TODO : 혹시 모를 업데이트 처리.
                     update: {
-                      currency: response.data.display_price ?? '',
+                      currency: data.display_price?.currency ?? '',
                       detailImages: {
                         deleteMany: {
                           productDetailId: req.productId!,
