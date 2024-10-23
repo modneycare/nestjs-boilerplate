@@ -49,3 +49,7 @@ lerna-debug.log*
 *.zip
 *.csv
 *.txt
+
+.env.local
+.env.development
+.env.production
