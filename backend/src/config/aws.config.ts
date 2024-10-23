@@ -1,8 +1,8 @@
 export default {
   accountId: process.env.AWS_ACCOUNT_ID,
   region: process.env.AWS_REGION,
-  AWS_ACCESS_KEY_ID : "AKIAWM2I32HZBWRC7WUL",
-  AWS_SECRET_ACCESS_KEY : "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",
+  accessKeyId : process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey : process.env.AWS_SECRET_ACCESS_KEY,
   s3: {
     bucketName: process.env.S3_BUCKET_NAME,
   },

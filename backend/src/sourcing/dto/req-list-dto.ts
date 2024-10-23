@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiHideProperty, ApiProperty } from '@nestjs/swagger';
 
 export class ReqOptionDto {
   @ApiProperty()
@@ -25,24 +25,25 @@ export class ReqOptionDto {
   forbiddenWordTemplateId?: string | null;
   @ApiProperty()
   replaceWordTemplateId?: string | null;
-  @ApiProperty()
+  @ApiProperty({ default: 'google' })
   translate?: string | null;
-  
 }
 export class PageScopeDto {
-  @ApiProperty()
+  @ApiProperty({ default: 1 })
   start_page: number;
-  @ApiProperty()
+  @ApiProperty({ default: 1 })
   end_page: number;
 }
 export class ReqListDto {
   @ApiProperty()
   userId?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({ default: 'crawler_1' })
   crawler_name: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    default: 'amazon',
+  })
   target: string;
 
   @ApiProperty()
@@ -51,10 +52,15 @@ export class ReqListDto {
   @ApiProperty()
   search_keyword?: string | null;
 
-  @ApiProperty()
+  @ApiProperty({
+    default:
+      'https://www.amazon.com/s?k=nike+dunks+women&crid=2H9OU7VJ21SF4&sprefix=nike+d%2Caps%2C314&ref=nb_sb_ss_pltr-mrr_3_6',
+  })
   request_url: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    default: 'true',
+  })
   proxy_mode?: string | null;
 
   @ApiProperty()
@@ -62,21 +68,37 @@ export class ReqListDto {
 
   @ApiProperty()
   option?: ReqOptionDto | null;
+
+  @ApiProperty()
+  sourcingSiteId?: number | null;
 }
 
+/**
+ * 사용자 -> 모듈  요청
+ * @param collectionId : 수집그룹아이디
+ * @param productId : 한건씩 개별 수집 요청하는 경우
+ */
 export class RequestDetailDto {
-  @ApiProperty()
-  crawlId: string;
-  @ApiProperty()
+  @ApiProperty({ description: 'collection ID(수집그룹아이디)', required: true })
+  collectionId: string;
+
+  @ApiProperty({ description: '무시' })
+  @ApiHideProperty()
   userId?: string | null;
 
+  @ApiProperty({ description: '상품 id( In table id)' })
+  productId: string[];
 }
+
+/**
+ * 모듈 -> 크롤러 요청 데이터
+ */
 export class ReqDetailDto {
   @ApiProperty()
   userId?: string | null;
 
   @ApiProperty()
-  cralwer_name: string;
+  crawler_name: string;
 
   @ApiProperty()
   target: string;

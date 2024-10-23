@@ -1,7 +1,14 @@
 import { JwtAuthGuard } from '@/auth/jwt-auth.guard';
-import { Body, Controller, Get, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { SourcingService } from './sourcing.service';
-import {  ReqListDto, RequestDetailDto } from './dto/req-list-dto';
+import { ReqListDto, RequestDetailDto } from './dto/req-list-dto';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 @Controller('sourcing')
@@ -29,9 +36,7 @@ export class SourcingController {
   @Get('request-list')
   @UseGuards(JwtAuthGuard)
   async GetRequestList(@Request() req) {
-      console.log('[GET]request-list : ', req.user?.id);
+    console.log('[GET]request-list : ', req.user?.id);
     return await this.sourcingService.getRequestList(req.user?.id);
   }
-
-
 }

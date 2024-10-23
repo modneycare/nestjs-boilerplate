@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { SourcingSite, Prisma } from '@prisma/client';
+import { SourcingSite, Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class SourcingSiteService {
@@ -68,5 +68,56 @@ export class SourcingSiteService {
     return {
       products: true,
     };
+  }
+
+  async findAllSellian(user: User) {
+    const data = await this.prisma.sourcingSite.findMany({
+      where: { activeWebSite: { has: 1 } ,
+      
+    },
+     distinct : ['id']
+      
+    });
+    return data
+  }
+
+  async findAllCrosell(user: User) {
+    const data = await this.prisma.sourcingSite.findMany({
+      where : { 
+        activeWebSite : { 
+          has : 2
+        },
+        userSourcingSites : { 
+          some : { 
+            userId : user.id, 
+          }
+        }
+      }
+    });
+
+    return data
+
+    // const data =  await this.prisma.userSourcingSite.findFirst({
+    //   where: { 
+    //     userId: user.id,
+    //     AND : {
+    //       sourcingSites : {
+    //         some : { 
+    //           activeWebSite : { 
+    //             has : 2
+    //           }
+    //         }
+    //       }
+    //     }
+        
+    //   }, 
+    //   include : { 
+    //     sourcingSites : {
+    //       distinct : ['id']
+    //     }
+    //   },
+    //   distinct : ['sourcingSiteId']
+    // });
+    // return data?.sourcingSites??[]
   }
 }

@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { MarketAPIKey, Prisma } from '@prisma/client';
+import { MarketAPIKey, Prisma, User } from '@prisma/client';
 
 @Injectable()
 export class MarketApiKeyService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: Prisma.MarketAPIKeyCreateInput): Promise<MarketAPIKey> {
-    return this.prisma.marketAPIKey.create({
-      data,
+    return await this.prisma.marketAPIKey.create({
+      data: {
+        ...data,
+      },
       include: this.getFullInclude(),
     });
   }
@@ -40,7 +42,7 @@ export class MarketApiKeyService {
   }
 
   async findOne(id: number): Promise<MarketAPIKey | null> {
-    return this.prisma.marketAPIKey.findUnique({
+    return await this.prisma.marketAPIKey.findUnique({
       where: { id },
       include: this.getFullInclude(),
     });
@@ -50,7 +52,7 @@ export class MarketApiKeyService {
     id: number,
     data: Prisma.MarketAPIKeyUpdateInput,
   ): Promise<MarketAPIKey> {
-    return this.prisma.marketAPIKey.update({
+    return await this.prisma.marketAPIKey.update({
       where: { id },
       data,
       include: this.getFullInclude(),
@@ -58,7 +60,7 @@ export class MarketApiKeyService {
   }
 
   async remove(id: number): Promise<MarketAPIKey> {
-    return this.prisma.marketAPIKey.delete({
+    return await this.prisma.marketAPIKey.delete({
       where: { id },
       include: this.getFullInclude(),
     });

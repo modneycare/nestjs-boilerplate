@@ -10,9 +10,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = env("DATABASE_URL")
-  directUrl = "postgresql://postgres.lmhcfxzekgrhbydgcmkc:66f49a507f6b7c8ac0fdff4d9e82658dac6918d9194d9806a1b1151014bea1e9@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres"
-  url = "postgresql://postgres.lmhcfxzekgrhbydgcmkc:66f49a507f6b7c8ac0fdff4d9e82658dac6918d9194d9806a1b1151014bea1e9@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres"
+  url      = env("DATABASE_URL")
+  // url = "postgresql://postgres:%5B62m%5Bxvhl2i%3AfhJx%28w%3EHIq%5BY9JEz@seller.cluster-cticm6e8o4gu.ap-northeast-2.rds.amazonaws.com:5432/seller"
 }
 
 enum Role {
@@ -26,6 +25,7 @@ model User {
   name                       String
   email                      String                      @unique
   phone                      String
+  code                       String?                     @default("") // 추천인 아이디
   role                       Role                        @default(USER)
   
   password                   String
@@ -90,7 +90,7 @@ model PaymentPlan {
   isUnlimited       Boolean            @default(false) // 무제한 여부
   price             Float // 플랜 가격
   createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
+  updatedAt         DateTime           @updatedAt @default(now())
   userSubscriptions UserSubscription[]
   Subscription      Subscription[]
 
@@ -106,7 +106,7 @@ model Subscription {
   endDate       DateTime
   isActive      Boolean     @default(true)
   createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  updatedAt     DateTime    @updatedAt() @default(now())
 
   @@index([paymentPlanId])
 }
@@ -130,14 +130,28 @@ model SourcingSite {
   id Int @id @default(autoincrement())
   name String
   defaultUrl String
+  target  String
+  type    String?
+  imageUrl String?
   isActive Boolean @default(true)
   activeWebSite Int[] 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  collections Collection[] @ignore
-
+  collections Collection[] 
+  userSourcingSites UserSourcingSite[]
   @@index([name])
 }
+model UserSourcingSite { 
+  userId String @db.Uuid @id
+  sourcingSiteId Int[]
+  sourcingSites SourcingSite[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt @default(now())
+  @@index([userId])
+  @@index([sourcingSiteId])
+}
+
+
 model Collection {
   id                Int                 @id @default(autoincrement())
   site              String
@@ -194,6 +208,7 @@ model Product {
 
   @@index([productId])
   @@index([url])
+  @@index([name])
 
 }
 
@@ -202,7 +217,7 @@ model ProductCollection {
   id           Int        @id @default(autoincrement())
   product      Product    @relation(fields: [productId], references: [id])
   productId    Int
-  collection   Collection @relation(fields: [collectionId], references: [id])
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
   collectionId Int
 
   @@index([productId])
@@ -213,7 +228,12 @@ model ProductDetail {
   id             Int             @id @default(autoincrement())
   product        Product         @relation(fields: [productId], references: [id])
   productId      Int             @unique // 1:1 관계를 보장하기 위해 unique 설정
+  productCode    String?         // 상품 코드 (product.productId와 동일)
+
   currency       String
+
+
+
   thumbnailUrl   String
   description    String?
   additionalInfo Json? // 부가설명 정보 (원단, 원산지 등 JSON 형태로 저장)
@@ -221,6 +241,20 @@ model ProductDetail {
   detailImages   DetailImage[]
 
   
+  shippingTitle   String? // 배송 정보 제목
+  shippingMinDate String? // 최소 배송일
+  shippingMaxDate String? // 최대 배송일
+  shippingFrom    String? // 배송 시작 지역
+  shippingTo      String? // 배송 도착 지역
+
+  reviewAverage   String? // 리뷰 평균
+  reviewCounts    String? // 리뷰 갯수
+
+  specificationInfo Json? // 상품 상세 정보
+  optionPriceInfo   Json? // 옵션별 가격 정보
+  optionInfo      Json? // 옵션 정보
+
+
   content         String? // 상품 설명
   brandName       String? // 브랜드명
   sellerName      String? // 판매자명 또는 가게명
@@ -231,7 +265,7 @@ model ProductDetail {
   translatedContent String? // 번역된 상품 설명
 
   createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  updatedAt      DateTime        @updatedAt @default(now())
 
   @@index([productId])
 }
@@ -240,7 +274,9 @@ model ProductOption {
   id              Int           @id @default(autoincrement())
   name            String // 옵션명 (예: 색상, 사이즈 등)
   price           Float
-  stockQuantity   Int // 옵션별 수량
+  stockQuantity   Int     // 옵션별 수량
+  optionImageUrl  String[] // 옵션별 이미지 URL
+  json            Json? // 옵션별 추가 정보 (JSON 형태로 저장)
   productDetail   ProductDetail @relation(fields: [productDetailId], references: [id])
   productDetailId Int
 
@@ -267,7 +303,9 @@ model UserProductDetail {
   status             CollectionStatus            @default(PENDING) // 상품의 수집 상태
   customImages       UserDetailImage[] // 사용자별 이미지 순서 관리
   marketUploads      MarketUpload[] // 마켓 업로드 상태 관리
-  categoryMapping    UserProductCategoryMapping? // 1:1 대응되는 카테고리 설정
+
+  categoryTemplate   CategoryTemplate? @relation(fields: [categoryTemplateId], references: [id]) // 1:1 대응되는 카테고리 설정 
+  categoryTemplateId Int?
   shippingTemplate   ShippingTemplate?           @relation(fields: [shippingTemplateId], references: [id]) // 적용된 배송비 템플릿
   shippingTemplateId Int?
   imageTemplate      ImageTemplate?              @relation(fields: [imageTemplateId], references: [id]) // 적용된 이미지 템플릿
@@ -281,8 +319,9 @@ model UserProductDetail {
   isLocked           Boolean                     @default(false) // 상품 잠금 여부
   notes              Note[] // 상품에 대한 사용자 메모
 
+
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @updatedAt  @default(now())
 
   @@index([userId])
   @@index([productId])
@@ -311,6 +350,19 @@ model ProductFailureLog {
   updatedAt  DateTime @updatedAt
 
   @@index([productId])
+}
+
+model UserProductFailureLog { 
+  id                  Int                         @id @default(autoincrement())
+  userId              String                      @db.Uuid
+  // 상품 상세정보 수집 후 DB과정이나 마켓업로드 처리에서 오류 발생시 
+  userProductDetailId Int?
+  // 상품 상세수집요청에서 오류 발생시
+  productId           Int?
+  reason              String  @default ("") // 실패 사유
+
+
+  @@index([userProductDetailId])
 }
 
 model UserLoginLog {
@@ -426,26 +478,26 @@ model MarketCategory {
   categoryIdInMarket         String // 마켓에서 사용하는 카테고리 ID
   categoryNameInMarket       String // 마켓에서 사용하는 카테고리명
   feeRate                    Float // 마켓 카테고리별 수수료율 (예: 5%는 0.05)
+  categoryTemplate           CategoryTemplate[]
+
   createdAt                  DateTime                     @default(now())
-  updatedAt                  DateTime                     @updatedAt
-  UserProductCategoryMapping UserProductCategoryMapping[]
+  updatedAt                  DateTime                     @updatedAt @default(now())
 
   @@index([marketId])
   @@index([categoryId])
   @@index([categoryIdInMarket])
 }
 
-model UserProductCategoryMapping {
-  id                  Int               @id @default(autoincrement())
-  userProductDetail   UserProductDetail @relation(fields: [userProductDetailId], references: [id])
-  userProductDetailId Int               @unique // 1:1 대응을 위한 유니크 제약 조건
-  marketCategory      MarketCategory    @relation(fields: [marketCategoryId], references: [id])
-  marketCategoryId    Int
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
 
-  @@index([userProductDetailId])
-  @@index([marketCategoryId])
+model CategoryTemplate { 
+  id                  Int               @id @default(autoincrement())
+  userId              String            @db.Uuid
+  marketCategory      MarketCategory[]
+  userProductDetail   UserProductDetail[]
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt  @default(now())
+
+  @@index([userId])
 }
 
 model MarginTemplate {
@@ -455,7 +507,7 @@ model MarginTemplate {
   name       String // 마진 템플릿 이름
   details    MarginTemplateDetail[] // 마진 세부 정보
   createdAt  DateTime               @default(now())
-  updatedAt  DateTime               @updatedAt
+  updatedAt  DateTime               @updatedAt @default(now())
   Collection Collection[]
 
   @@index([userId])

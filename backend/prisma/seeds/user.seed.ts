@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 export const InitUsers = async (prismaClient: PrismaClient) => {
   // Create Admin account
   await prismaClient.user.upsert({
-    where: { id: '5839a4f0-87a9-4a22-a669-2a68c736f746' },
+    where: { email: 'admin@gmail.com' },
     update: {},
     create: {
       name: 'Admin',
@@ -17,7 +17,7 @@ export const InitUsers = async (prismaClient: PrismaClient) => {
 
   // Create Provider account
   await prismaClient.user.upsert({
-    where: { id: '81de6ea8-c73c-42f1-9863-acfb18322ce4' },
+    where: { email: 'user@gmail.com' },
     update: {},
     create: {
       name: 'User',
@@ -31,7 +31,7 @@ export const InitUsers = async (prismaClient: PrismaClient) => {
 
   // Create other Verified account
   await prismaClient.user.upsert({
-    where: { id: '81de6ea8-c73c-42f1-9863-acfb18322ce7' },
+    where: { email: 'MANAGER@gmail.com' },
     update: {},
     create: {
       name: 'Manager',
@@ -44,7 +44,7 @@ export const InitUsers = async (prismaClient: PrismaClient) => {
   });
 
   await prismaClient.user.upsert({
-    where: { id: '81de6ea8-c73c-42f1-9863-acfb18322ce7' },
+    where: { email: 'test' },
     update: {},
     create: {
       name: 'test',
@@ -55,5 +55,32 @@ export const InitUsers = async (prismaClient: PrismaClient) => {
       isApproved: true,
     },
   });
+
+  await prismaClient.user.upsert({
+    where: { email: 'crosell' },
+    update: {},
+    create: {
+      name: 'crosell',
+      email: 'crosell',
+      phone: '12341',
+      password: '$2b$10$bdS87oU/IB8un3x.hkJ4COISd2ixNNcb2bddl2rIjMNS2xJvpkHDu', // 123456789
+      role: 'MANAGER',
+      isApproved: true,
+    },
+  });
+
+  await prismaClient.user.upsert({
+    where: { email: 'sellian' },
+    update: {},
+    create: {
+      name: 'sellian',
+      email: 'sellian',
+      phone: '12341',
+      password: '$2b$10$bdS87oU/IB8un3x.hkJ4COISd2ixNNcb2bddl2rIjMNS2xJvpkHDu', // 123456789
+      role: 'MANAGER',
+      isApproved: true,
+    },
+  });
+
 
 };

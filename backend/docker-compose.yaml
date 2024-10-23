@@ -1,25 +1,35 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:13.5
-    restart: always
-    env_file:
-      - .env
-    volumes:
-      # Use a named volume for persistence
-      - postgres_data:/var/lib/postgresql/data   
-    ports:
-      - '5432:5432'
+  # postgres:
+  #   image: postgres:13.5
+  #   restart: always
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     # Use a named volume for persistence
+  #     - postgres_data:/var/lib/postgresql/data   
+  #   ports:
+  #     - '5432:5432'
 
-  adminer:
-    image: adminer
-    container_name: adminer
-    restart: always
+  # adminer:
+  #   image: adminer
+  #   container_name: adminer
+  #   restart: always
+  #   ports:
+  #     - 8080:8080
+  #   depends_on:
+  #     - postgres
+      
+  redis:
+    image: redis:alpine
+    volumes:
+      - .docker/redis:/data
+    command: redis-server --requirepass ${REDIS_PASS}
+    networks:
+      - appnet
     ports:
-      - 8080:8080
-    depends_on:
-      - postgres
+      - ${REDIS_PORT}:6379
 
   api:
     build:
@@ -27,7 +37,8 @@ services:
       dockerfile: Dockerfile.dev
     restart: always
     depends_on:
-      - postgres
+      # - postgres
+      - redis
     ports:
       - '6001:6001'
     env_file:

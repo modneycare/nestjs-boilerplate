@@ -44,6 +44,18 @@ export class SourcingSiteController {
     return this.sourcingSiteService.findAll(pageNumber, pageSizeNumber);
   }
 
+  @Get('sellian') 
+  @UseGuards(JwtAuthGuard)
+  async findAllSellian(@Request() req) {
+    return this.sourcingSiteService.findAllSellian(req.user);
+  }
+
+  @Get('crosell')
+  @UseGuards(JwtAuthGuard)
+  async findAllCrosell(@Request() req) {
+    return this.sourcingSiteService.findAllCrosell(req.user);
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.sourcingSiteService.findOne(+id);
