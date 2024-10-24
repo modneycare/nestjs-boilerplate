@@ -31,6 +31,8 @@ async function bootstrap() {
       bufferLogs: true,
     },
   );
+  
+
   await app.register(fastifyHelmet);
   await app.register(fastifyCompress);
   await app.register(fastifyCookie);
@@ -40,6 +42,18 @@ async function bootstrap() {
       secure: false, // HTTPS를 사용하는 경우 true로 설정
     },
   });
+  app.enableCors({
+    origin: [
+      // `${process.env.FRONTEND_URL}`, // Allow requests from your frontend URL
+      // 'http://localhost:3000', // Allow requests from localhost:3000
+      '*', // Allow requests from all domains
+      // 'https://*.crosell.kr',
+      // 'https://*.crosell.co.kr'
+    ],
+    methods: ['*'],
+    credentials: true,
+  });
+
   // await app.register(fastifyAxios);
   // (await app.register(naverCommerceApi)).after((err) => {
   //   if (err) {
@@ -47,15 +61,7 @@ async function bootstrap() {
   //   }
   // });
 
-  app.enableCors({
-    origin: [
-      // `${process.env.FRONTEND_URL}`, // Allow requests from your frontend URL
-      // 'http://localhost:3000', // Allow requests from localhost:3000
-      '*', // Allow requests from all domains
-    ],
-    methods: ['*'],
-    credentials: true,
-  });
+  
 
   const config = new DocumentBuilder()
     .setTitle('LOG')

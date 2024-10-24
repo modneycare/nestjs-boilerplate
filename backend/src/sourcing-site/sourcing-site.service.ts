@@ -79,20 +79,41 @@ export class SourcingSiteService {
   }
 
   async findAllCrosell(user: User) {
+
+    const _user = await this.prisma.user.findUnique({
+      where : { 
+        id : user.id
+      }
+    });
+    if ( ["ADMIN","MANAGER"].includes(_user.role)) {
+      return await this.prisma.sourcingSite.findMany({
+        where : { 
+          activeWebSite : { 
+            has : 2
+          }
+        }, 
+        orderBy : { 
+          id : 'asc'
+        }
+      });
+    }
     const data = await this.prisma.sourcingSite.findMany({
       where: {
         activeWebSite: {
           has: 2,
         },
+        
         // TOOD : 페이먼트플랜이랑 연계해서 실행
-        // userSourcingSites: {
-        //   some: {
-        //     userId: user.id,
-        //   },
-        // },
+        userSourcingSites: {
+          some: {
+            userId: user.id,
+          },
+        },
       },
+      orderBy : { 
+        id : 'asc'
+      }
     });
-    console.log('crosell : ', data);
     return data;
 
     // const data =  await this.prisma.userSourcingSite.findFirst({

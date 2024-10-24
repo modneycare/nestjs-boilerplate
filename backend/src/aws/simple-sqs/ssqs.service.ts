@@ -165,13 +165,14 @@ export class SsqsService {
         // TODO : 성인상품여부, 광고상품여부, 표시가격에서 가격 추출
         const results = [];
         response.forEach(async (element) => {
-          const displayPrice = element.product_price ?? '';
+          console.log('element', element)
+          const displayPrice = element.product_price?.toString() ?? '';
           const translatedName =
             await this.translationService.translateProductNameGpt(
               element.product_name,
             );
           // 표시가격은 '' 또는 '$200' 형태로 존재함 , 통화표시 제외하고 숫자만 추출
-          const price = displayPrice.replace('$', '');
+          const price = displayPrice?.replace('$', '') ?? "";
           console.log('element : ', element);
 
           const result = await this.prismaService.product.upsert({
@@ -182,6 +183,7 @@ export class SsqsService {
               productId: element.product_id,
               url: element.product_url,
               thumbnailUrl: element.product_image ?? '',
+              
               name: element.product_name,
               translatedName: translatedName ?? element.product_name,
               displayPrice: displayPrice,
@@ -511,7 +513,7 @@ export class SsqsService {
             const userProductDetail = await tx.userProductDetail.create({
               data: {
                 userId: user.id,
-                productId: req.product!.id!,
+                productId: req.productId,
                 collectionId: req.collectionId,
                 status: CollectionStatus.COMPLETED,
                 customImages: {
